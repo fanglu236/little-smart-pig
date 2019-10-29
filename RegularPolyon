@@ -1,0 +1,92 @@
+
+public class RegularPolyon {
+	private int n;
+	private double side;
+	private double x;
+	private double y;
+	public RegularPolyon()
+	{
+		this.n = 3;
+		this.side = 1;
+		this.x = 0;
+		this.y = 0;
+	}
+	public RegularPolyon(int n,double side)
+	{
+		this.n = n;
+		this.side = side;
+	}
+	public RegularPolyon(int n,double side,double x,double y)
+	{
+		this.n = n;
+		this.side = side;
+		this.x = x;
+		this.y = y;
+	}
+	
+	public int getN()
+	{
+		return n;
+	}
+	
+	public void setN(int n)
+	{
+		this.n = n;
+	}
+	
+	
+	public double getSide()
+	{
+		return side;
+	}
+	
+	public void setSide(double side)
+	{
+		this.side = side;
+	}	
+	
+	public double getX()
+	{
+		return x;
+	}
+	
+	public void setX(double x)
+	{
+		this.x = x;
+	}
+	
+	public double getY()
+	{
+		return y;
+	}
+	
+	public void setY(double y)
+	{
+		this.y = y;
+	}
+	
+	public double getPerimeter()
+	{
+		return n*side;
+	}
+	
+	public double getArea()
+	{
+		return (n*side*side)/(4*Math.tan(Math.PI/n));
+	
+	}
+	
+
+
+	public static void main(String[] args) {
+		RegularPolyon yuan1 = new RegularPolyon();
+		System.out.println("yuan1: C="+yuan1.getPerimeter()+"\n       "+"S="+yuan1.getArea());
+		
+		RegularPolyon yuan2 = new RegularPolyon(6,4);
+		System.out.println("yuan2: C="+yuan2.getPerimeter()+"\n       "+"S="+yuan2.getArea());
+		
+		RegularPolyon yuan3 = new RegularPolyon(10,4,5.6,7.8);
+		System.out.println("yuan3: C="+yuan3.getPerimeter()+"\n       "+"S="+yuan3.getArea());
+	}
+
+}
