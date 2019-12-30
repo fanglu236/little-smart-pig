@@ -1,0 +1,341 @@
+public class Coupon implements Comparable<Coupon> {
+ 
+    private int id;
+ 
+    private int batchId;
+ 
+    private String name;
+ 
+    private BigDecimal amount;
+ 
+    private String couponType;
+ 
+    public Coupon() {
+    }
+ 
+    public Coupon(int id, String name, BigDecimal amount) {
+        this.id = id;
+        this.name = name;
+        this.amount = amount;
+    }
+ 
+    public int getId() {
+        return id;
+    }
+ 
+    public void setId(int id) {
+        this.id = id;
+    }
+ 
+    public int getBatchId() {
+        return batchId;
+    }
+ 
+    public void setBatchId(int batchId) {
+        this.batchId = batchId;
+    }
+ 
+    public String getName() {
+        return name;
+    }
+ 
+    public void setName(String name) {
+        this.name = name;
+    }
+ 
+    public BigDecimal getAmount() {
+        return amount;
+    }
+ 
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+ 
+    public String getCouponType() {
+        return couponType;
+    }
+ 
+    public void setCouponType(String couponType) {
+        this.couponType = couponType;
+    }
+ 
+    @Override
+    public int compareTo(Coupon o) {
+        return id - o.id;
+    }
+ 
+    @Override
+    public String toString() {
+        return "[" + "id=" + id + ", amount=" + amount + ']';
+    }
+ 
+}
+
+public class Combinations {
+ 
+    /**
+     * 所有的组合
+     * 
+     * @param arr
+     * @return
+     */
+    public static <R extends Comparable<R>> List<List<R>> allCombination(List<R> arr) {
+        int length = arr.size();
+        // 组合由多少个元素组成的
+        List<List<R>> result = new ArrayList<>();
+        int i = 1;
+        while (i <= length) {
+            // 生成i个元素的组合
+            result.addAll(combinationSelect(arr, i));
+            i++;
+        }
+        return result;
+    }
+ 
+    /**
+     * 由n个元素组成的组合
+     * 
+     * @param arr 数组
+     * @param i 组合的元素个数
+     * @return 组合集合
+     */
+    private static <R extends Comparable<R>> List<List<R>> combinationSelect(List<R> arr, int i) {
+        return new DFSCombination<>(arr, i).select();
+    }
+ 
+    public static <R extends Comparable<R>> HashMap<String, Integer> getCombinationMap(List<Coupon> couponList) {
+        List<List<Coupon>> allCombination = allCombination(couponList);
+        HashMap<String, Integer> map = new HashMap<>();
+        for (List<Coupon> coupons : allCombination) {
+            List<String> collect = coupons.stream().map(coupon -> String.valueOf(coupon.getId()))
+                    .collect(Collectors.toList());
+            int total = coupons.stream().mapToInt(coupon -> coupon.getAmount().intValue()).sum();
+            map.put(String.join("-", collect), total);
+        }
+        return map;
+    }
+ 
+    // 筛选最接近支付金额的结果
+    public static int binarysearchKey(Object[] array, BigDecimal targetNum) {
+        Arrays.sort(array);
+        int left = 0, right = 0;
+        for (right = array.length - 1; left != right;) {
+            int midIndex = (right + left) / 2;
+            int mid = (right - left);
+            int midValue = (Integer) array[midIndex];
+            if (targetNum.compareTo(new BigDecimal(midValue)) == 0) {
+                return midValue;
+            }
+ 
+            if (targetNum.compareTo(new BigDecimal(midValue)) == 1) {
+                left = midIndex;
+            } else {
+                right = midIndex;
+            }
+            if (mid <= 1) {
+                break;
+            }
+        }
+        int rightnum = ((Integer) array[right]).intValue();
+        int leftnum = ((Integer) array[left]).intValue();
+        // 如果一个大于支付金额，一个小于支付金额，优先返回大于支付金额的结果
+        if (new BigDecimal(rightnum).compareTo(targetNum) == 1 && new BigDecimal(leftnum).compareTo(targetNum) == -1) {
+            return rightnum;
+        }
+        BigDecimal rightiffVal = new BigDecimal(rightnum).subtract(targetNum);
+        BigDecimal leftDiffVal = new BigDecimal(leftnum).subtract(targetNum);
+        int ret = Math.abs(leftDiffVal.intValue()) > Math.abs(rightiffVal.intValue()) ? rightnum : leftnum;
+        // System.out.println("要查找的数：" + targetNum + "最接近的数：" + ret);
+        return ret;
+    }
+ 
+    /**
+     * DFS实现组合
+     */
+    private static class DFSCombination<R extends Comparable<R>> {
+ 
+        // 标记元素是否已被组合
+        private Set<R> bookSet = new HashSet<>();
+ 
+        private List<R> arr;
+ 
+        private int n;
+ 
+        private Map<Integer, R> bucks;
+ 
+        private List<List<R>> result = new ArrayList<>();
+ 
+        public DFSCombination(List<R> arr, int n) {
+            this.arr = arr;
+            this.n = n;
+            bucks = new LinkedHashMap<>();
+        }
+ 
+        private void dfs(int index) {
+            if (index == n) {
+                // 说明组合数满了
+                result.add(composite());
+                return;
+            }
+ 
+            for (int i = 0; i < arr.size(); i++) {
+                R element = arr.get(i);
+                if (!bookSet.contains(element)) {
+                    if (index > 0) {
+                        // 保证一个组合的顺序,从小到大的顺序
+                        R lastElement = bucks.get(index - 1);
+                        if (lastElement.compareTo(element) > 0) {
+                            continue;
+                        }
+                    }
+                    // 第几个位置放置什么元素
+                    bucks.put(index, element);
+                    bookSet.add(element);
+                    dfs(index + 1);
+                    bookSet.remove(element);
+                }
+            }
+ 
+        }
+ 
+        public List<List<R>> select() {
+            dfs(0);
+            return result;
+        }
+ 
+        private List<R> composite() {
+            return bucks.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
+        }
+ 
+    }
+ 
+}
+
+
+public class TestOptimumCoupon {
+ 
+    public static void main(String[] args) {
+        // 用户优惠券列表
+        List<Coupon> couponList = null;
+        // 支付金额
+        BigDecimal money = null;
+        List<Coupon> optimumList = getOptimumList(couponList, money);
+    }
+ 
+    private static List<Coupon> getOptimumList(List<Coupon> couponList, BigDecimal amount) {
+        // 现金券集合
+        Map<Integer, List<Coupon>> cashMap = new HashMap<>();
+        // 代金券集合
+        List<Coupon> voucherList = new ArrayList<>();
+        // 折扣券集合
+        List<Coupon> discountList = new ArrayList<>();
+        for (Coupon coupon : couponList) {
+            if ("CASH".equals(coupon.getCouponType())) {
+                // 如果是现金券，对不同批次进行筛选
+                if (cashMap.get(coupon.getBatchId()) == null) {
+                    List<Coupon> cacheList = new ArrayList<>();
+                    cacheList.add(coupon);
+                    cashMap.put(coupon.getBatchId(), cacheList);
+                } else {
+                    List<Coupon> cacheList = cashMap.get(coupon.getBatchId());
+                    cacheList.add(coupon);
+                }
+            }
+            if ("VOUCHER".equals(coupon.getCouponType())) {
+                voucherList.add(coupon);
+            }
+            if ("DISCOUNT".equals(coupon.getCouponType())) {
+                discountList.add(coupon);
+            }
+        }
+        // endResultMap 同批次现金券最优解，折扣券最优解，代金券最优解
+        // endResultMap key 优惠券id字符串 value 最优解优惠金额
+        HashMap<String, Integer> endResultMap = new HashMap<>();
+        // 判断现金券map长度 现金券处理开始
+        if (!cashMap.isEmpty()) {
+            // 筛选现金券不同批次最优解
+            for (Map.Entry<Integer, List<Coupon>> m : cashMap.entrySet()) {
+                // 获取当前批次所有组合
+                HashMap<String, Integer> map = Combinations.getCombinationMap(m.getValue());
+                // 获取当前批次最优解
+                int result = getOptimumVal4Map(map, amount);
+                // 根据value找最优解优惠券id,放入最优解map
+                getOptimumMap4SameBatch(map, result, endResultMap);
+                // 不同批次现金券最优解合集
+            }
+            // 现金券处理结束
+        }
+        // 代金券处理开始 判断长度
+        if (voucherList.size() > 0) {
+            voucherList.sort((Coupon c1, Coupon c2) -> c1.getAmount().compareTo(c2.getAmount()));
+            // 获取代金券最大值，放入最终结果map
+            endResultMap.put(voucherList.get(voucherList.size() - 1).getId() + "",
+                    voucherList.get(voucherList.size() - 1).getAmount().intValue());
+            // 代金券处理结束
+        }
+        // 折扣券处理开始 判断长度
+        if (discountList.size() > 0) {
+            discountList.sort((Coupon c1, Coupon c2) -> c1.getAmount().compareTo(c2.getAmount()));
+            // 获取折扣最小值 并计算最大折扣金额
+            BigDecimal discountTmp = discountList.get(0).getAmount();
+            BigDecimal realCountTmp = new BigDecimal(100).subtract(discountTmp);
+            BigDecimal discountTmpVal = amount.multiply(realCountTmp).divide(new BigDecimal(100));
+            endResultMap.put(discountList.get(0).getId() + "", discountTmpVal.intValue());
+            // 折扣券处理结束
+        }
+        // 获取最终结果
+        int endResult = getOptimumVal4Map(endResultMap, amount);
+        // 获取优惠券id集合字符串
+        String couponDetailStr = getOptimumStr(endResultMap, endResult);
+        // 判断是否为空
+        List<String> couponDetailIdList = new ArrayList<>();
+        if (StringUtils.isNotEmpty(couponDetailStr)) {
+            if (couponDetailStr.contains("-")) {
+                String[] couponDetailArr = couponDetailStr.split("-");
+                for (String str : couponDetailArr) {
+                    couponDetailIdList.add(str);
+                }
+            } else {
+                couponDetailIdList.add(couponDetailStr);
+            }
+        }
+        List<Coupon> optimumList = new ArrayList<>();
+        // 循环用户优惠券列表，进行比较
+        for (Coupon coupon : couponList) {
+            for (String str : couponDetailIdList) {
+                if (coupon.getId() == Integer.parseInt(str)) {
+                    optimumList.add(coupon);
+                }
+            }
+        }
+        return optimumList;
+    }
+ 
+    private static int getOptimumVal4Map(HashMap<String, Integer> map, BigDecimal amount) {
+        ArrayList<Integer> array = new ArrayList<Integer>();
+        for (Map.Entry<String, Integer> m2 : map.entrySet()) {
+            array.add(m2.getValue());
+        }
+        int result = Combinations.binarysearchKey(array.toArray(), amount);
+        return result;
+    }
+ 
+    private static void getOptimumMap4SameBatch(HashMap<String, Integer> map, int result,
+            HashMap<String, Integer> endResultMap) {
+        for (Map.Entry<String, Integer> m : map.entrySet()) {
+            if (m.getValue().intValue() == result) {
+                endResultMap.put(m.getKey(), m.getValue());
+                return;
+            }
+        }
+    }
+ 
+    private static String getOptimumStr(HashMap<String, Integer> map, int result) {
+        for (Map.Entry<String, Integer> m : map.entrySet()) {
+            if (m.getValue().intValue() == result) {
+                return m.getKey();
+            }
+        }
+        return null;
+    }
+}
